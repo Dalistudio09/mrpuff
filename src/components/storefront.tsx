@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
 import { Minus, Plus, Search, ShoppingBag, X } from "lucide-react";
-import { AgeGate } from "@/components/age-gate";
 import { Button, buttonClass, fieldClass } from "@/components/button";
 import { DeviceArt } from "@/components/device-art";
 import { cn } from "@/lib/cn";
@@ -10,8 +9,6 @@ import { lineKey } from "@/lib/flavors";
 import { formatPrice } from "@/lib/format";
 import { placeOrder } from "@/lib/shop.functions";
 import type { Product } from "@/lib/types";
-
-const AGE_KEY = "mrpuff-age-ok";
 
 function formatPhone(digits: string): string {
   if (!digits) return "";
@@ -96,8 +93,6 @@ export function Storefront({
   products: Product[];
   whatsappPhone?: string;
 }) {
-  const [age, setAge] = useState<boolean | null>(null);
-  const [declined, setDeclined] = useState(false);
   const ready = useCartReady();
   const items = useCart((state) => state.items);
   const setQty = useCart((state) => state.setQty);
@@ -105,28 +100,9 @@ export function Storefront({
   const [cartOpen, setCartOpen] = useState(false);
 
   useEffect(() => {
-    setAge(localStorage.getItem(AGE_KEY) === "1");
-  }, []);
-
-  useEffect(() => {
     if (!ready) return;
     useCart.getState().reconcile(products);
   }, [products, ready]);
-
-  if (age !== true) {
-    return (
-      <AgeGate
-        declined={declined}
-        onYes={() => {
-          localStorage.setItem(AGE_KEY, "1");
-          setAge(true);
-          setDeclined(false);
-        }}
-        onNo={() => setDeclined(true)}
-        onBack={() => setDeclined(false)}
-      />
-    );
-  }
 
   const count = ready ? cartCount(items) : 0;
   const total = ready ? cartTotal(items) : 0;
@@ -134,7 +110,6 @@ export function Storefront({
   return (
     <div className="min-h-screen">
       <Header count={count} onCart={() => setCartOpen(true)} />
-      <Hero />
       <Catalog products={products} />
       <Footer />
       {ready && count > 0 && !cartOpen ? (
@@ -159,7 +134,7 @@ function Header({ count, onCart }: { count: number; onCart: () => void }) {
   return (
     <header className="sticky top-0 z-40 border-b border-line bg-white">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-5">
-        <a href="#top" className="flex min-w-0 items-center gap-2 text-ink">
+        <a href="#catalog" className="flex min-w-0 items-center gap-2 text-ink">
           <img src="/brand/mark.png" alt="" className="h-10 w-auto shrink-0 sm:h-11" />
           <span className="truncate font-display text-2xl leading-none tracking-tight sm:text-[1.65rem]">Mr.Puff</span>
         </a>
@@ -173,28 +148,6 @@ function Header({ count, onCart }: { count: number; onCart: () => void }) {
         </div>
       </div>
     </header>
-  );
-}
-
-function Hero() {
-  return (
-    <section id="top" className="mx-auto max-w-6xl px-5 pt-4 pb-10 text-center sm:pt-6 sm:pb-14 md:text-left">
-      <div className="relative">
-        <h1>
-          <img
-            src="/brand/logo.png?v=4"
-            alt="Mr.Puff"
-            className="mx-auto h-auto w-[min(16rem,70vw)] object-contain sm:w-[18rem] md:mx-0"
-          />
-        </h1>
-        <p className="mx-auto mt-4 max-w-xl text-lg text-mist md:mx-0 md:text-xl">Электронные системы. Каталог и быстрый заказ.</p>
-        <div className="mt-6">
-          <a href="#catalog" className={buttonClass.primary}>
-            Смотреть каталог
-          </a>
-        </div>
-      </div>
-    </section>
   );
 }
 
@@ -261,7 +214,7 @@ function Catalog({ products }: { products: Product[] }) {
   const openLine = allLines.find((line) => line.key === openKey) ?? null;
 
   return (
-    <section id="catalog" className="mx-auto max-w-6xl scroll-mt-20 px-5 pb-24">
+    <section id="catalog" className="mx-auto max-w-6xl scroll-mt-20 px-5 pt-6 pb-24">
       <h2 className="font-display text-display text-ink">Каталог</h2>
       <div className="-mx-5 mt-4 flex gap-2 overflow-x-auto px-5 pb-1">
         <Chip pressed={brand === null} onClick={() => setBrand(null)}>
@@ -630,7 +583,7 @@ function CartSheet({
                   maxLength={200}
                   onChange={(event) => setAddress(event.target.value)}
                   className={fieldClass}
-                  placeholder="Улица, дом, квартира"
+                  placeholder="улица, дом, подъезд"
                 />
               </label>
               <label className="grid gap-2 text-sm text-mist">
